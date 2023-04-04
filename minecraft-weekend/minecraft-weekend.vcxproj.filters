@@ -77,6 +77,9 @@
     <ClCompile Include="iron_ore.c">
       <Filter>src\world\blocks</Filter>
     </ClCompile>
+    <ClCompile Include="stack.c">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="shader.h">
@@ -119,6 +122,9 @@
       <Filter>src\world</Filter>
     </ClInclude>
     <ClInclude Include="FastNoiseLite.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="stack.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

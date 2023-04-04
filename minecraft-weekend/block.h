@@ -34,7 +34,8 @@ typedef enum {
 	EAST,
 	WEST,
 	TOP,
-	BOTTOM
+	BOTTOM,
+	NUM_DIRECTIONS
 } Direction;
 
 

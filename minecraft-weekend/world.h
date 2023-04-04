@@ -2,12 +2,13 @@
 #define WORLD_H
 
 #include "chunk.h"
-
-#define RENDER_DISTANCE 16
+#include "stack.h"
+#define RENDER_DISTANCE 12
 
 struct World {
 	ivec3s world_loaded_position;
 	struct Chunk** chunks;
+	Stack* queued_updates;
 };
 
 
@@ -18,8 +19,13 @@ void world_render(struct World* world);
 
 struct Chunk* world_get_chunk_at_chunk_coordinate(struct World* world, ivec3s pos);
 
-
-bool get_block_at_world_pos(struct World* world, ivec3s world_pos, BlockId* block, struct Chunk** containing_chunk);
+/*
+returns block status
+-1: block is not loaded
+0: block does not exist
+1: block exists
+*/
+int get_block_at_world_pos(struct World* world, ivec3s world_pos, BlockId* block, struct Chunk** containing_chunk);
 
 void world_set_loaded_position(struct World* world, ivec3s new_pos);
 
@@ -47,6 +53,8 @@ static inline bool world_chunk_in_bounds(struct World* self, ivec3s offset) {
 }
 
 void world_update(struct World* world);
+
+
 
 #define world_pos_to_block_pos(world_pos) (ivec3s) {\
 			.x = (world_pos.x < 0 ? CHUNK_SIZE : 0) + (world_pos.x % CHUNK_SIZE == 0 && world_pos.x < 0 ? -CHUNK_SIZE : world_pos.x % CHUNK_SIZE),		\

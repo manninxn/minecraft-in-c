@@ -140,6 +140,7 @@
     <ClCompile Include="main.c" />
     <ClCompile Include="render.c" />
     <ClCompile Include="shader.c" />
+    <ClCompile Include="stack.c" />
     <ClCompile Include="stone.c" />
     <ClCompile Include="texture.c" />
     <ClCompile Include="utils.c" />
@@ -155,6 +156,7 @@
     <ClInclude Include="FastNoiseLite.h" />
     <ClInclude Include="gfx_common.h" />
     <ClInclude Include="render.h" />
+    <ClInclude Include="stack.h" />
     <ClInclude Include="texture.h" />
     <ClInclude Include="shader.h" />
     <ClInclude Include="state.h" />

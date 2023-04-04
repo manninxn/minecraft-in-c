@@ -10,4 +10,5 @@ float max_depth = 100.0;
 void main(){
 	float depth = gl_FragCoord.z / gl_FragCoord.w;
 	FragColor = texture(texture1, TexCoord) * shade;
+
 } 

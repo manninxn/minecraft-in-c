@@ -1,59 +1,67 @@
 #ifndef FACE_H
 #define FACE_H
 
+#include <cglm/types-struct.h>
+#include <cglm/cglm.h>
+#include "utils.h"
+//https://github.com/jdah/minecraft-weekend/blob/master/src/world/blockmesh.c
+static const unsigned int FACE_INDICES[] =
+{ 1, 0, 3, 1, 3, 2 };
 
-#define NORTH_VERTS(x, y, z, sprite_x, sprite_y, ao_a, ao_b, ao_c, ao_d) {														\
-	((x + 1) | ((y + 1) << 6u) | ((z + 1) << 12u)) | (2 << 18u) | (sprite_x << 20u) | (sprite_y << 24u) | (0 << 28u), ao_a,											\
-	((x + 1) | ((y + 0) << 6u) | ((z + 1) << 12u)) | (1 << 18u) | (sprite_x << 20u) | (sprite_y << 24u) | (0 << 28u), ao_b,											\
-	((x + 0) | ((y + 0) << 6u) | ((z + 1) << 12u)) | (0 << 18u) | (sprite_x << 20u) | (sprite_y << 24u) | (0 << 28u), ao_c,											\
-	((x + 0) | ((y + 1) << 6u) | ((z + 1) << 12u)) | (3 << 18u) | (sprite_x << 20u) | (sprite_y << 24u) | (0 << 28u), ao_d,									\
-}														  
-														  
-#define SOUTH_VERTS(x, y, z, sprite_x, sprite_y, ao_a, ao_b, ao_c, ao_d) {													\
-	((x + 1) | ((y + 1) << 6u) | ((z + 0) << 12u)) | (2 << 18u) | (sprite_x << 20u) | (sprite_y << 24u) | (1 << 28u), ao_a,												\
-	((x + 1) | ((y + 0) << 6u) | ((z + 0) << 12u)) | (1 << 18u) | (sprite_x << 20u) | (sprite_y << 24u) | (1 << 28u), ao_b,												\
-	((x + 0) | ((y + 0) << 6u) | ((z + 0) << 12u)) | (0 << 18u) | (sprite_x << 20u) | (sprite_y << 24u) | (1 << 28u), ao_c,												\
-	((x + 0) | ((y + 1) << 6u) | ((z + 0) << 12u)) | (3 << 18u) | (sprite_x << 20u) | (sprite_y << 24u) | (1 << 28u), ao_d,												\
-}														  
-														  
-#define EAST_VERTS(x, y, z, sprite_x, sprite_y, ao_a, ao_b, ao_c, ao_d) {														\
-	((x + 1) | ((y + 1) << 6u) | ((z + 0) << 12u)) | (2 << 18u) | (sprite_x << 20u) | (sprite_y << 24u) | (2 << 28u), ao_a,												\
-	((x + 1) | ((y + 0) << 6u) | ((z + 0) << 12u)) | (1 << 18u) | (sprite_x << 20u) | (sprite_y << 24u) | (2 << 28u), ao_b,												\
-	((x + 1) | ((y + 0) << 6u) | ((z + 1) << 12u)) | (0 << 18u) | (sprite_x << 20u) | (sprite_y << 24u) | (2 << 28u), ao_c,												\
-	((x + 1) | ((y + 1) << 6u) | ((z + 1) << 12u)) | (3 << 18u) | (sprite_x << 20u) | (sprite_y << 24u) | (2 << 28u), ao_d,												\
-}														   
-														   
-#define WEST_VERTS(x, y, z, sprite_x, sprite_y, ao_a, ao_b, ao_c, ao_d) {													\
-	((x + 0) | ((y + 1) << 6u) | ((z + 0) << 12u)) | (2 << 18u) | (sprite_x << 20u) | (sprite_y << 24u) | (3 << 28u), ao_a,											\
-	((x + 0) | ((y + 0) << 6u) | ((z + 0) << 12u)) | (1 << 18u) | (sprite_x << 20u) | (sprite_y << 24u) | (3 << 28u), ao_b,											\
-	((x + 0) | ((y + 0) << 6u) | ((z + 1) << 12u)) | (0 << 18u) | (sprite_x << 20u) | (sprite_y << 24u) | (3 << 28u), ao_c,											\
-	((x + 0) | ((y + 1) << 6u) | ((z + 1) << 12u)) | (3 << 18u) | (sprite_x << 20u) | (sprite_y << 24u) | (3 << 28u), ao_d,											\
-}														   
-														   
-#define BOTTOM_VERTS(x, y, z, sprite_x, sprite_y, ao_a, ao_b, ao_c, ao_d) {													\
-	((x + 1) | ((y + 0) << 6u) | ((z + 1) << 12u)) | (2 << 18u) | (sprite_x << 20u) | (sprite_y << 24u) | (4 << 28u), ao_a,												\
-	((x + 1) | ((y + 0) << 6u) | ((z + 0) << 12u)) | (1 << 18u) | (sprite_x << 20u) | (sprite_y << 24u) | (4 << 28u), ao_b,												\
-	((x + 0) | ((y + 0) << 6u) | ((z + 0) << 12u)) | (0 << 18u) | (sprite_x << 20u) | (sprite_y << 24u) | (4 << 28u), ao_c,												\
-	((x + 0) | ((y + 0) << 6u) | ((z + 1) << 12u)) | (3 << 18u) | (sprite_x << 20u) | (sprite_y << 24u) | (4 << 28u), ao_d,												\
-}														  
-														  
-#define TOP_VERTS(x, y, z, sprite_x, sprite_y, ao_a, ao_b, ao_c, ao_d) {													\
-	((x + 1) | ((y + 1) << 6u) | ((z + 1) << 12u)) | (2 << 18u) | (sprite_x << 20u) | (sprite_y << 24u) | (5 << 28u), ao_a,											\
-	((x + 1) | ((y + 1) << 6u) | ((z + 0) << 12u)) | (1 << 18u) | (sprite_x << 20u) | (sprite_y << 24u) | (5 << 28u), ao_b,											\
-	((x + 0) | ((y + 1) << 6u) | ((z + 0) << 12u)) | (0 << 18u) | (sprite_x << 20u) | (sprite_y << 24u) | (5 << 28u), ao_c,											\
-	((x + 0) | ((y + 1) << 6u) | ((z + 1) << 12u)) | (3 << 18u) | (sprite_x << 20u) | (sprite_y << 24u) | (5 << 28u), ao_d,											\
+static const unsigned int UNIQUE_INDICES[] = { 1, 0, 5, 2 };
+static const unsigned int CUBE_INDICES[] = {
+	4, 5, 6, 4, 6, 7, // north (+z)
+	1, 0, 3, 1, 3, 2, // south (-z)
+	5, 1, 2, 5, 2, 6, // east (+x)
+	0, 4, 7, 0, 7, 3, // west (-x)
+	2, 3, 7, 2, 7, 6, // top (+y)
+	5, 4, 0, 5, 0, 1, // bottom (-y)
+};
+
+
+static const unsigned int CUBE_VERTICES[] = {
+	0, 0, 0,
+	1, 0, 0,
+	1, 1, 0,
+	0, 1, 0,
+
+	0, 0, 1,
+	1, 0, 1,
+	1, 1, 1,
+	0, 1, 1
+};
+
+
+ivec3s get_corner(ivec3 vertex, ivec3 normal, ivec3s voxel);
+
+
+ivec3s get_side1(ivec3 vertex, ivec3 normal, ivec3s voxel);/* {
+    ivec3s side1 = { vertex.x, vertex.y, vertex.z };
+    if (normal.x != 0) {
+        side1.y += 1;
+    }
+    else if (normal.y != 0) {
+        side1.x += 1;
+    }
+    else if (normal.z != 0) {
+        side1.x += 1;
+    }
+    return side1;
 }
-
-#define INDICES_INWARDS(offset) {  														 \
-	offset + 3, offset + 1, offset,														 \
-	offset + 3, offset + 2, offset + 1,													 \
+*/
+ivec3s get_side2(ivec3 vertex, ivec3 normal, ivec3s voxel);/*{
+    ivec3s side2 = { vertex.x, vertex.y, vertex.z };
+    if (normal.x != 0) {
+        side2.z += 1;
+    }
+    else if (normal.y != 0) {
+        side2.z += 1;
+    }
+    else if (normal.z != 0) {
+        side2.y += 1;
+    }
+    return side2;
 }
-
-#define INDICES_OUTWARDS(offset) {														 \
-	offset, offset + 1, offset + 3,														 \
-	offset + 1, offset + 2, offset + 3													 \
-}
-
-
+*/
 
 #endif

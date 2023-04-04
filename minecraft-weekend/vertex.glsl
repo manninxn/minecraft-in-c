@@ -20,16 +20,17 @@ vec2 texCoords[4] = vec2[4] (
 );
 
 float shade_strengths[6] = float[6] (
-    0.8,
-    0.7,
-    0.8,
-    0.7,
-    0.3,
-    0.9
+  0.8,
+  0.7,
+  0.8,
+  0.7,
+  0.9,
+  0.3
 );
 
 
 const int chunk_size = 16;
+
 
 void main()
 {
@@ -53,8 +54,6 @@ void main()
     shade = clamp(shade_strengths[normal_index] - float(ao_state) * 0.25, 0, 1);
 
     
-
- 
 
     float sprite_size = float(atlas_params.x) / float(atlas_params.y);
 

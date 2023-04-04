@@ -125,13 +125,13 @@ int main() {
 	float dt = 0;
 	
 	while (!glfwWindowShouldClose(window)) {
-		i++;
+
 		
 		shader_uniform_vec3(state.shader, "camera_pos", state.cam.position.raw);
 
 
 		//print_sizes();
-		printf("%f,%f,%f\n", state.cam.position.x, state.cam.position.y, state.cam.position.z);
+		//printf("%f,%f,%f\n", state.cam.position.x, state.cam.position.y, state.cam.position.z);
 
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

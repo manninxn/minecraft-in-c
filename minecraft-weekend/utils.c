@@ -24,3 +24,31 @@ char* load_file(const char* fileName)
 	return shaderContent;
 }
 
+
+ivec3s get_ortho_one(ivec3 normal) {
+	if (normal[0] != 0) {
+		return (ivec3s) { .x = 0, .y = 1, .z = 0};
+	}
+	else if(normal[1] != 0) {
+		return (ivec3s) { .x = 0, .y = 0, .z = 1 };
+	}
+	else {
+		return (ivec3s) { .x = 1, .y = 0, .z = 0 };
+	}
+}
+
+ivec3s get_ortho_two(ivec3 normal) {
+	if (normal[0] != 0) {
+		return (ivec3s) { .x = 0, .y = 0, .z = 1 };
+	}
+	else if (normal[1] != 0) {
+		return (ivec3s) {
+		.x = 1, .y = 0, .z = 0
+	};
+	}
+	else {
+		return 	(ivec3s) {
+			.x = 0, .y = 1, .z = 0
+		};
+	}
+}
