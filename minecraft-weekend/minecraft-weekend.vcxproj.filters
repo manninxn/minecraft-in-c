@@ -1,0 +1,152 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="src\gfx">
+      <UniqueIdentifier>{8526b49f-5150-4cd1-8641-867fbbe428c1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\gfx\shaders">
+      <UniqueIdentifier>{919d1570-0729-453a-9318-4532ac5b8629}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="res">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="src\world">
+      <UniqueIdentifier>{eb945301-6b14-4225-b991-ecf00d95a181}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\world\blocks">
+      <UniqueIdentifier>{3cd641c4-27b7-4d38-8417-4313baaabadf}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="glad.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="shader.c">
+      <Filter>src\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="vbo.c">
+      <Filter>src\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="utils.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="vao.c">
+      <Filter>src\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="camera.c">
+      <Filter>src\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="texture.c">
+      <Filter>src\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="render.c">
+      <Filter>src\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="face.c">
+      <Filter>src\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="block.c">
+      <Filter>src\world</Filter>
+    </ClCompile>
+    <ClCompile Include="chunk.c">
+      <Filter>src\world</Filter>
+    </ClCompile>
+    <ClCompile Include="world.c">
+      <Filter>src\world</Filter>
+    </ClCompile>
+    <ClCompile Include="grass.c">
+      <Filter>src\world\blocks</Filter>
+    </ClCompile>
+    <ClCompile Include="air.c">
+      <Filter>src\world\blocks</Filter>
+    </ClCompile>
+    <ClCompile Include="dirt.c">
+      <Filter>src\world\blocks</Filter>
+    </ClCompile>
+    <ClCompile Include="stone.c">
+      <Filter>src\world\blocks</Filter>
+    </ClCompile>
+    <ClCompile Include="iron_ore.c">
+      <Filter>src\world\blocks</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="shader.h">
+      <Filter>src\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="vbo.h">
+      <Filter>src\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="gfx_common.h">
+      <Filter>src\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="utils.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="vao.h">
+      <Filter>src\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="camera.h">
+      <Filter>src\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="state.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="texture.h">
+      <Filter>src\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="render.h">
+      <Filter>src\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="face.h">
+      <Filter>src\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="block.h">
+      <Filter>src\world</Filter>
+    </ClInclude>
+    <ClInclude Include="chunk.h">
+      <Filter>src\world</Filter>
+    </ClInclude>
+    <ClInclude Include="world.h">
+      <Filter>src\world</Filter>
+    </ClInclude>
+    <ClInclude Include="FastNoiseLite.h">
+      <Filter>src</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="vertex.glsl">
+      <Filter>src\gfx\shaders</Filter>
+    </None>
+    <None Include="fragment.glsl">
+      <Filter>src\gfx\shaders</Filter>
+    </None>
+    <None Include="skybox_vert.glsl">
+      <Filter>src\gfx\shaders</Filter>
+    </None>
+    <None Include="skybox_frag.glsl">
+      <Filter>src\gfx\shaders</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="test.png">
+      <Filter>res</Filter>
+    </Image>
+    <Image Include="texture_atlas.png">
+      <Filter>res</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="problems.txt">
+      <Filter>res</Filter>
+    </Text>
+  </ItemGroup>
+</Project>
