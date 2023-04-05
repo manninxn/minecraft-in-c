@@ -4,8 +4,7 @@
 #include <GLFW/glfw3.h>
 #include "shader.h"
 #include "camera.h"
-
-
+#include <Windows.h>
 
 struct State {
 	GLFWwindow* window;

@@ -31,3 +31,19 @@ void vbo_clear(struct VBO self) {
 	
 	glBufferData(self.type, 0, NULL, self.dynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
 }
+
+void* vbo_map(struct VBO self) {
+
+	vbo_bind(self);
+	
+	void* data = glMapBuffer(self.type, GL_READ_WRITE);
+	GLenum err = glGetError();
+	printf("%i\n", err);
+	return data;
+
+}
+
+void vbo_unmap(struct VBO self) {
+	vbo_bind(self);
+	glUnmapBuffer(self.type);
+}

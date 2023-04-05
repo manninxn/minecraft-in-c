@@ -4,6 +4,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <stdio.h>
+#include <conio.h>
 
 #include "utils.h"
 #include "vao.h"
@@ -40,6 +41,9 @@ void window_resize_callback(GLFWwindow* window, int width, int height) {
 
 
 #define WORLD_SIZE 16
+
+
+
 
 int main() {
 
@@ -124,11 +128,14 @@ int main() {
 	clock_t last = clock();
 	float dt = 0;
 	
+
+
+
 	while (!glfwWindowShouldClose(window)) {
 
 		
 		shader_uniform_vec3(state.shader, "camera_pos", state.cam.position.raw);
-
+		
 
 		//print_sizes();
 		//printf("%f,%f,%f\n", state.cam.position.x, state.cam.position.y, state.cam.position.z);
@@ -143,12 +150,13 @@ int main() {
 		camera_handle_input(&state.cam);
 
 		ivec3s world_center = {
-			.x = RENDER_DISTANCE/2,
+			.x = RENDER_DISTANCE /2,
 			.y = RENDER_DISTANCE / 2,
 			.z = RENDER_DISTANCE / 2
 		};
 		ivec3s cam_chunk = world_pos_to_chunk_pos(state.cam.position);
 
+		
 		glm_ivec3_sub(cam_chunk.raw, world_center.raw, &world_center.raw);
 
 		world_set_loaded_position(state.world, world_center);
@@ -161,6 +169,7 @@ int main() {
 		glDisable(GL_CULL_FACE);
 		shader_bind(state.skybox);
 		shader_uniform_vec3(state.skybox, "look_dir", state.cam.look_direction.raw);
+		shader_uniform_ivec2(state.skybox, "viewport_size", state.cam.viewport_size.raw);
 		vao_attribute(skybox_vao, skybox_vertex_buffer, 0, 3, GL_FLOAT, 3 * sizeof(float), 0);
 		vao_bind(skybox_vao);
 		vbo_bind(skybox_index_buffer);
@@ -171,7 +180,8 @@ int main() {
 
 		shader_bind(shader);
 
-		
+		shader_uniform_vec3(state.shader, "look_dir", state.cam.look_direction.raw);
+		shader_uniform_ivec2(state.shader, "viewport_size", state.cam.viewport_size.raw);
 		struct ViewProjection view_proj = camera_gew_view_projection(state.cam);
 
 		shader_uniform_view_proj(shader, view_proj);

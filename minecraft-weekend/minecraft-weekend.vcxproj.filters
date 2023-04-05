@@ -21,6 +21,9 @@
     <Filter Include="src\world\blocks">
       <UniqueIdentifier>{3cd641c4-27b7-4d38-8417-4313baaabadf}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\util">
+      <UniqueIdentifier>{fa4843d5-77fb-43d0-a673-dcaac21e46b0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.c">
@@ -34,9 +37,6 @@
     </ClCompile>
     <ClCompile Include="vbo.c">
       <Filter>src\gfx</Filter>
-    </ClCompile>
-    <ClCompile Include="utils.c">
-      <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="vao.c">
       <Filter>src\gfx</Filter>
@@ -80,6 +80,9 @@
     <ClCompile Include="stack.c">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="utils.c">
+      <Filter>src\util</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="shader.h">
@@ -90,9 +93,6 @@
     </ClInclude>
     <ClInclude Include="gfx_common.h">
       <Filter>src\gfx</Filter>
-    </ClInclude>
-    <ClInclude Include="utils.h">
-      <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="vao.h">
       <Filter>src\gfx</Filter>
@@ -126,6 +126,15 @@
     </ClInclude>
     <ClInclude Include="stack.h">
       <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="utils.h">
+      <Filter>src\util</Filter>
+    </ClInclude>
+    <ClInclude Include="ivec3s.h">
+      <Filter>src\util</Filter>
+    </ClInclude>
+    <ClInclude Include="ivec3.h">
+      <Filter>src\util</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

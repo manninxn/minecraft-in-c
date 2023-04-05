@@ -5,10 +5,11 @@
 typedef struct {
 	int size;
 	size_t itemSize;
+	size_t capacity;
 	void* items;
 } Stack;
 
-Stack* create_stack(size_t itemSize);
+Stack* create_stack(size_t itemSize, size_t capacity);
 
 void push_stack(Stack* stack, void* item);
 

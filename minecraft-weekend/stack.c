@@ -3,18 +3,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>
+#include <string.h>
 
-Stack* create_stack(size_t itemSize) {
+Stack* create_stack(size_t itemSize, size_t capacity) {
 	Stack* stack = malloc(sizeof(Stack));
 	stack->size = 0;
-	stack->items = malloc(itemSize);
+	stack -> capacity = capacity;
+	stack->items = malloc(itemSize * capacity);
 	stack->itemSize = itemSize;
 	return stack;
 };
 
 void push_stack(Stack* stack, void* item) {
-	
-	stack->items = realloc(stack->items, stack->itemSize * (stack->size + 1));
+	if (stack->size == stack->capacity) {
+		stack->capacity *= 2;
+		stack->items = realloc(stack->items, stack->itemSize * stack->capacity);
+	}
 	void* dest = (char*)stack->items + (stack->size * stack->itemSize);
 	memcpy(dest, item, stack->itemSize);
 
@@ -24,7 +28,8 @@ void push_stack(Stack* stack, void* item) {
 void pop_stack(Stack* stack, void* out) {
 	void* src = (char*)stack->items + ((stack->size - 1) * stack->itemSize);
 	memcpy(out, src, stack->itemSize);
-	stack->items = realloc(stack->items, stack->itemSize * (stack->size - 1));
+	
+	//stack->items = realloc(stack->items, stack->itemSize * (stack->size - 1));
 	stack->size--;
 };
 

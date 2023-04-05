@@ -3,8 +3,10 @@
 #include "FastNoiseLite.h"
 #include <windows.h>
 #include <time.h>
+#include <io.h>
 
 fnl_state noise, stone_noise, iron_noise, cave_noise;
+
 
 
 struct World* world_create() {
@@ -12,10 +14,10 @@ struct World* world_create() {
 
 world->world_loaded_position = (ivec3s) {0, 0, 0},
 	
-	world->chunks = malloc(RENDER_DISTANCE * RENDER_DISTANCE * RENDER_DISTANCE * sizeof(struct Chunk*));
-	memset(world->chunks, 0, NUM_CHUNKS * sizeof(struct Chunk*));
+	world->chunks = malloc(MAX_CHUNKS * sizeof(struct Chunk*));
+	memset(world->chunks, 0, MAX_CHUNKS * sizeof(struct Chunk*));
 
-	world->queued_updates = create_stack(sizeof(struct Chunk*));
+	world->queued_updates = create_stack(sizeof(struct Chunk*), MAX_CHUNKS);
 
 
 	 noise = fnlCreateState();
@@ -37,27 +39,28 @@ world->world_loaded_position = (ivec3s) {0, 0, 0},
 }
 
 void world_update(struct World* world) {
-
-	world_load_unloaded_chunks(world, 1);
 	clock_t start, end;
-	double cpu_time_used;
+	double cpu_time_used, load_unloaded_chunks_time;
+	start = clock();
+	world_load_unloaded_chunks(world, 2);
+	end = clock();
+	load_unloaded_chunks_time = ((double)(end - start)) / CLOCKS_PER_SEC;
 
 	start = clock();
-
-
+	int updates = 0;
 	while (world->queued_updates->size > 0) {
 		struct Chunk* chunk;
 		pop_stack(world->queued_updates, &chunk);
 		if (chunk != NULL) {
 			
 			chunk_update(chunk, world);
-
+			updates += 1;
 			
 		}
 	}
 	end = clock();
 	cpu_time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
-	printf("world took %f seconds to update\n", cpu_time_used);
+	if (updates > 0) printf("world took %f seconds to load unloaded chunks, %f seconds to update %d chunks (%fs/update)\n", load_unloaded_chunks_time,  cpu_time_used, updates, cpu_time_used / (float)updates);
 
 
 }
@@ -87,6 +90,7 @@ void world_set_loaded_position(struct World* world, ivec3s new_pos) {
 	int z_offset = world->world_loaded_position.z - new_pos.z;
 	world->world_loaded_position.x = new_pos.x;
 	world->world_loaded_position.z = new_pos.z;
+	world->world_loaded_position.y = new_pos.y;
 	bool x_positive, y_positive, z_positive;
 	x_positive = x_offset > 0 ? true : false;
 	y_positive = y_offset > 0 ? true : false;
@@ -96,13 +100,13 @@ void world_set_loaded_position(struct World* world, ivec3s new_pos) {
 	y_offset = abs(y_offset);
 	z_offset = abs(z_offset);
 
-	struct Chunk* old[NUM_CHUNKS];
-	memcpy(old, world->chunks, NUM_CHUNKS * sizeof(struct Chunk*));
+	struct Chunk** old = malloc(sizeof(struct Chunk*) * MAX_CHUNKS);
+	memcpy(old, world->chunks, MAX_CHUNKS * sizeof(struct Chunk*));
 
 	// Set world to all unloaded chunks initially
-	memset(world->chunks, 0, NUM_CHUNKS * sizeof(struct Chunk*));
+	memset(world->chunks, 0, MAX_CHUNKS * sizeof(struct Chunk*));
 
-	for (int i = 0; i < NUM_CHUNKS; i++) {
+	for (int i = 0; i < MAX_CHUNKS; i++) {
 		struct Chunk* c = old[i];
 		if (c == NULL) {
 			continue;
@@ -116,43 +120,59 @@ void world_set_loaded_position(struct World* world, ivec3s new_pos) {
 		}
 	}
 
+	free(old);
+
+}
+
+
+// front-to-back ordering comparator
+static int _ftb_cmp(const ivec3s* center, const ivec3s* a, ivec3s* b) {
+	return -(glms_ivec3_norm2(glms_ivec3_sub(*center, *b)) - glms_ivec3_norm2(glms_ivec3_sub(*center, *a)));
 }
 
 void world_load_unloaded_chunks(struct World* world, int count) {
 	int num_loaded = 0;
 	int spread = 1;
+	ivec3s vectors_sorted[MAX_CHUNKS];
+	int num_unloaded = 0;
+	for (int chunk_index = 0; chunk_index < MAX_CHUNKS; chunk_index++) {
+			struct Chunk* chunk = world->chunks[chunk_index];
+			ivec3s pos = world_chunk_offset(world, chunk_index);
+			if (chunk != NULL) {
+				continue;
+			}
+			
+			vectors_sorted[num_unloaded] = pos;
+			num_unloaded++;
+	}
+	int amt = min(num_unloaded, count);
+	if (amt == 0) return;
+	ivec3s world_center = glms_ivec3_add(world->world_loaded_position, (ivec3s) {RENDER_DISTANCE / 2, RENDER_DISTANCE / 2, RENDER_DISTANCE / 2});
 
-	for (int chunk_x = 0; chunk_x < RENDER_DISTANCE; chunk_x++)
-		for (int chunk_z = 0; chunk_z < RENDER_DISTANCE; chunk_z++) 
-			for (int chunk_y = 0; chunk_y < RENDER_DISTANCE; chunk_y++) {
+	qsort_s(vectors_sorted, num_unloaded, sizeof(ivec3s), (int (*)(const void*, const void*, void*)) _ftb_cmp, &world_center);
 
-					struct Chunk* chunk = world->chunks[chunk_coord_to_index(chunk_x, chunk_y, chunk_z)];
+	for(int vec = 0; vec < amt; vec++) {
+					ivec3s chunk_pos = vectors_sorted[vec];
+					int chunk_index = world_chunk_index(world, chunk_pos);
+
+					struct Chunk* chunk = world->chunks[chunk_index];
 
 					if (chunk != NULL) continue;
-					num_loaded++;
-					if (num_loaded > count) break;
-					chunk = chunk_new(world, (ivec3s) {
-						.x = chunk_x + world->world_loaded_position.x,
-							.y = chunk_y + world->world_loaded_position.y,
-							.z = chunk_z + world->world_loaded_position.z
-					});
+				
+					chunk = chunk_new(world, chunk_pos);
+					
 
-
-
-
-
-					world->chunks[chunk_coord_to_index(chunk_x, chunk_y, chunk_z)] = chunk;
-
+					world->chunks[chunk_index] = chunk;
 					int num_blocks = 0;
 					int x, y, z;
-					x = chunk->chunk_pos.x;
-					y = chunk->chunk_pos.y;
-					z = chunk->chunk_pos.z;
+					x = chunk_pos.x;
+					y = chunk_pos.y;
+					z = chunk_pos.z;
 
 
 					for (int xb = 0; xb < CHUNK_SIZE; xb++)
 						for (int zb = 0; zb < CHUNK_SIZE; zb++) {
-
+							BlockId block = AIR;
 							const int N_OCTAVES = 5;
 							float amplitude = 15.0;
 							float frequency = 0.5;
@@ -172,12 +192,12 @@ void world_load_unloaded_chunks(struct World* world, int count) {
 							for (int i = 0; i < CHUNK_SIZE; i++) {
 								int world_y = i + CHUNK_SIZE * y;
 								if (world_y == terrain_height) {
-									chunk->blocks[xb][i][zb] = GRASS;
+									block = GRASS;
 									num_blocks++;
 								}
 								else if (world_y < terrain_height) {
 									if (world_y < terrain_height - stone_height) {
-										chunk->blocks[xb][i][zb] = STONE;
+										block = STONE;
 										num_blocks++;
 
 										if (world_y < 55) {
@@ -185,14 +205,14 @@ void world_load_unloaded_chunks(struct World* world, int count) {
 											iron_ore_noise *= iron_ore_noise * iron_ore_noise;
 											int distance_from_best_level = abs(world_y - 40);
 											if (iron_ore_noise > remap_range((float)distance_from_best_level, 0.0, 9.0, 3.15, 4.0)) {
-												chunk->blocks[xb][i][zb] = IRON_ORE;
+												block = IRON_ORE;
 											}
 										}
 
 										if (world_y < 60) {
 											float cave = fnlGetNoise3D(&cave_noise, xb + CHUNK_SIZE * x, i + CHUNK_SIZE * y, zb + CHUNK_SIZE * z);
 											if (cave > 0.5) {
-												chunk->blocks[xb][i][zb] = AIR;
+												block = AIR;
 												num_blocks--;
 											}
 										}
@@ -200,7 +220,7 @@ void world_load_unloaded_chunks(struct World* world, int count) {
 
 									}
 									else {
-										chunk->blocks[xb][i][zb] = DIRT;
+										block = DIRT;
 										num_blocks++;
 									}
 
@@ -209,37 +229,18 @@ void world_load_unloaded_chunks(struct World* world, int count) {
 
 								}
 								else {
-									chunk->blocks[xb][i][zb] = AIR;
+									block = AIR;
 								}
 
+								chunk_set_block(chunk, (ivec3s) { xb, i, zb }, block);
 
-
-
+		
 							}
 
 						}
-					if (num_blocks > 0) {
 
-
-						struct Chunk** adjacent_chunks = malloc(sizeof(struct Chunk*) * 6);
-						memset(adjacent_chunks, 0, sizeof(struct Chunk*) * 6);
-						adjacent_chunks[0] = chunk_x < RENDER_DISTANCE - 1 ? world->chunks[chunk_coord_to_index(chunk_x + 1, chunk_y, chunk_z)] : NULL;
-						adjacent_chunks[1] = chunk_x > 0 ? world->chunks[chunk_coord_to_index(chunk_x - 1, chunk_y, chunk_z)] : NULL;
-						adjacent_chunks[2] = chunk_y < RENDER_DISTANCE - 1 ? world->chunks[chunk_coord_to_index(chunk_x, chunk_y + 1, chunk_z)] : NULL;
-						adjacent_chunks[3] = chunk_y > 0 ? world->chunks[chunk_coord_to_index(chunk_x, chunk_y - 1, chunk_z)] : NULL;
-						adjacent_chunks[4] = chunk_z < RENDER_DISTANCE - 1 ? world->chunks[chunk_coord_to_index(chunk_x, chunk_y, chunk_z + 1)] : NULL;
-						adjacent_chunks[5] = chunk_z > 0 ? world->chunks[chunk_coord_to_index(chunk_x, chunk_y, chunk_z - 1)] : NULL;
-
-						for (int i = 0; i < 6; i++) {
-							struct Chunk* adjacent = adjacent_chunks[i];
-							if (adjacent != NULL) {
-								flag_chunk_update(adjacent);
-							}
-						}
-						flag_chunk_update(chunk);
 					}
 
-				}
 
 
 	
@@ -263,7 +264,7 @@ int get_block_at_world_pos(struct World* world, ivec3s world_pos, BlockId* block
 		.y = floor((float)world_pos.y / (float)CHUNK_SIZE),
 		.z = floor((float)world_pos.z / (float)CHUNK_SIZE),
 	};
-	
+
 	ivec3s block_pos_in_chunk = world_pos_to_block_pos(world_pos);
 
 	struct Chunk* chunk = world_get_chunk_at_chunk_coordinate(world, chunk_pos);

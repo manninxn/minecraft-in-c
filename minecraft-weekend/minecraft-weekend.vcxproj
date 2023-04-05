@@ -77,6 +77,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>C:\glad\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -155,6 +156,8 @@
     <ClInclude Include="face.h" />
     <ClInclude Include="FastNoiseLite.h" />
     <ClInclude Include="gfx_common.h" />
+    <ClInclude Include="ivec3.h" />
+    <ClInclude Include="ivec3s.h" />
     <ClInclude Include="render.h" />
     <ClInclude Include="stack.h" />
     <ClInclude Include="texture.h" />

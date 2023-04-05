@@ -44,4 +44,8 @@ lol i forgot i was trying to document everything
 */
 void vbo_clear(struct VBO self);
 
+void* vbo_map(struct VBO self);
+
+void vbo_unmap(struct VBO self);
+
 #endif
