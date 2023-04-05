@@ -4,7 +4,7 @@
 #include "ivec3s.h"
 #include "chunk.h"
 #include "stack.h"
-#define RENDER_DISTANCE 24
+#define RENDER_DISTANCE 16
 #define MAX_CHUNKS (RENDER_DISTANCE * RENDER_DISTANCE * RENDER_DISTANCE)
 
 

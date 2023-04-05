@@ -5,7 +5,7 @@
 #include <time.h>
 #include <io.h>
 
-fnl_state noise, stone_noise, iron_noise, cave_noise;
+fnl_state noise, stone_noise, iron_noise, cave_noise, floating_island_noise;
 
 
 
@@ -34,6 +34,10 @@ world->world_loaded_position = (ivec3s) {0, 0, 0},
 	 cave_noise = fnlCreateState();
 	cave_noise.noise_type = FNL_NOISE_PERLIN;
 	cave_noise.frequency = 0.05;
+
+	floating_island_noise = fnlCreateState();
+	floating_island_noise.noise_type = FNL_NOISE_PERLIN;
+	floating_island_noise.frequency = 0.025;
 
 	return world;
 }
@@ -135,7 +139,7 @@ void world_load_unloaded_chunks(struct World* world, int count) {
 	int spread = 1;
 	ivec3s vectors_sorted[MAX_CHUNKS];
 	int num_unloaded = 0;
-	for (int chunk_index = 0; chunk_index < MAX_CHUNKS; chunk_index++) {
+	for (int chunk_index = RENDER_DISTANCE * RENDER_DISTANCE; chunk_index < MAX_CHUNKS; chunk_index++) {
 			struct Chunk* chunk = world->chunks[chunk_index];
 			ivec3s pos = world_chunk_offset(world, chunk_index);
 			if (chunk != NULL) {
@@ -229,7 +233,24 @@ void world_load_unloaded_chunks(struct World* world, int count) {
 
 								}
 								else {
-									block = AIR;
+									if (world_y > 80) {
+										int _y = (i + CHUNK_SIZE * y) * 3;
+										int _y2 = (1 + i + CHUNK_SIZE * y) * 3;
+										float island = fnlGetNoise3D(&floating_island_noise, xb + CHUNK_SIZE * x, _y, zb + CHUNK_SIZE * z);
+										float block_above = fnlGetNoise3D(&floating_island_noise, xb + CHUNK_SIZE * x, _y2, zb + CHUNK_SIZE * z);
+										if (island > 0.5) {
+											block = block_above > 0.5 ? DIRT : GRASS;
+											num_blocks++;
+										}
+										else {
+											block = AIR;
+											num_blocks--;
+										}
+									}
+									else {
+										block = AIR;
+										num_blocks--;
+									}
 								}
 
 								chunk_set_block(chunk, (ivec3s) { xb, i, zb }, block);
