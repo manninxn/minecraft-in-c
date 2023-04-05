@@ -5,6 +5,7 @@
 #include "block.h"
 #include <cglm/types-struct.h>
 #include <cglm/cglm.h>
+#include <windows.h>
 #include <malloc.h>
 #include <stdio.h>
 #include <string.h>
@@ -26,6 +27,7 @@ struct Chunk {
 	int index_count;
 	int block_count;
 	struct World* world;
+	HANDLE generation_mutex;
 	unsigned int* vertex_buffer;
 	unsigned int* index_buffer;
 	bool updating;

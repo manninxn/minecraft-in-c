@@ -129,6 +129,33 @@ int main() {
 	float dt = 0;
 	
 
+	state.generation_worker_data = (struct ThreadData){
+	.world = state.world,
+	.shouldTerminate = 0
+	};
+
+
+	ivec3s world_center = {
+	.x = RENDER_DISTANCE / 2,
+	.y = RENDER_DISTANCE / 2,
+	.z = RENDER_DISTANCE / 2
+	};
+	ivec3s cam_chunk = world_pos_to_chunk_pos(state.cam.position);
+
+
+	glm_ivec3_sub(cam_chunk.raw, world_center.raw, &world_center.raw);
+
+	world_set_loaded_position(state.world, world_center);
+
+
+	HANDLE hWorkerThread = CreateThread(
+		NULL,                   // default security attributes
+		0,                      // default stack size
+		generation_worker_thread,      // thread function
+		(LPVOID)&state.generation_worker_data,          // thread function argument
+		0,                      // default creation flags
+		NULL                    // ignore the thread identifier
+	);
 
 
 	while (!glfwWindowShouldClose(window)) {
@@ -149,20 +176,9 @@ int main() {
 
 		camera_handle_input(&state.cam);
 
-		ivec3s world_center = {
-			.x = RENDER_DISTANCE /2,
-			.y = RENDER_DISTANCE / 2,
-			.z = RENDER_DISTANCE / 2
-		};
-		ivec3s cam_chunk = world_pos_to_chunk_pos(state.cam.position);
-
-		
-		glm_ivec3_sub(cam_chunk.raw, world_center.raw, &world_center.raw);
-
-		world_set_loaded_position(state.world, world_center);
 
 
-		world_update(state.world);
+	//	world_update(state.world);
 
 
 		glDisable(GL_DEPTH_TEST);
@@ -194,6 +210,7 @@ int main() {
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_CULL_FACE);
 		world_render(world);
+
 
 
 

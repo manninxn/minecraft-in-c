@@ -39,6 +39,11 @@ world->world_loaded_position = (ivec3s) {0, 0, 0},
 }
 
 void world_update(struct World* world) {
+
+	WaitForSingleObject(world->load_unloaded_mutex, INFINITY);
+
+
+
 	clock_t start, end;
 	double cpu_time_used, load_unloaded_chunks_time;
 	start = clock();
@@ -62,29 +67,30 @@ void world_update(struct World* world) {
 	cpu_time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
 	if (updates > 0) printf("world took %f seconds to load unloaded chunks, %f seconds to update %d chunks (%fs/update)\n", load_unloaded_chunks_time,  cpu_time_used, updates, cpu_time_used / (float)updates);
 
-
+	ReleaseMutex(world->load_unloaded_mutex);
 }
 
 
 void world_render(struct World* world) {
-	
-
+	WaitForSingleObject(world->load_unloaded_mutex, INFINITY);
 	for (int x = 0; x < RENDER_DISTANCE; x++)
 		for (int y = 0; y < RENDER_DISTANCE; y++)
 			for (int z = 0; z < RENDER_DISTANCE; z++)
 			{
-				struct Chunk* chunk = world->chunks[chunk_coord_to_index(x, y, z)];
+				int chunk_index = chunk_coord_to_index(x, y, z);
+				struct Chunk* chunk = world->chunks[chunk_index];
 				if (chunk != NULL) {
-					chunk_render(world->chunks[chunk_coord_to_index(x, y, z)]);
+					chunk_render(chunk);
 				}
+
 				
 			}
-
-
+	ReleaseMutex(world->load_unloaded_mutex);
 
 }
 
 void world_set_loaded_position(struct World* world, ivec3s new_pos) {
+	WaitForSingleObject(world->load_unloaded_mutex, INFINITY);
 	int x_offset = world->world_loaded_position.x - new_pos.x;
 	int y_offset = world->world_loaded_position.y - new_pos.y;
 	int z_offset = world->world_loaded_position.z - new_pos.z;
@@ -122,8 +128,20 @@ void world_set_loaded_position(struct World* world, ivec3s new_pos) {
 
 	free(old);
 
+	ReleaseMutex(world->load_unloaded_mutex);
+
 }
 
+
+DWORD WINAPI generation_worker_thread(LPVOID lpParam) {
+	struct ThreadData* data = (struct ThreadData*)lpParam;
+
+	while (!data->shouldTerminate) {
+		world_update(data->world);
+	}
+
+	return 0;
+}
 
 // front-to-back ordering comparator
 static int _ftb_cmp(const ivec3s* center, const ivec3s* a, ivec3s* b) {
@@ -150,6 +168,8 @@ void world_load_unloaded_chunks(struct World* world, int count) {
 	ivec3s world_center = glms_ivec3_add(world->world_loaded_position, (ivec3s) {RENDER_DISTANCE / 2, RENDER_DISTANCE / 2, RENDER_DISTANCE / 2});
 
 	qsort_s(vectors_sorted, num_unloaded, sizeof(ivec3s), (int (*)(const void*, const void*, void*)) _ftb_cmp, &world_center);
+
+	//WaitForSingleObject(world->load_unloaded_mutex, INFINITY);
 
 	for(int vec = 0; vec < amt; vec++) {
 					ivec3s chunk_pos = vectors_sorted[vec];
@@ -241,7 +261,7 @@ void world_load_unloaded_chunks(struct World* world, int count) {
 
 					}
 
-
+	//ReleaseMutex(world->load_unloaded_mutex);
 
 	
 }

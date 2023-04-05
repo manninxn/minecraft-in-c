@@ -4,6 +4,7 @@
 #include "ivec3s.h"
 #include "chunk.h"
 #include "stack.h"
+#include "state.h"
 #define RENDER_DISTANCE 24
 #define MAX_CHUNKS (RENDER_DISTANCE * RENDER_DISTANCE * RENDER_DISTANCE)
 
@@ -11,19 +12,17 @@
 struct World {
 	ivec3s world_loaded_position;
 	struct Chunk** chunks;
+	HANDLE stack_mutex;
+	HANDLE load_unloaded_mutex;
 	Stack* queued_updates;
 };
 
-struct BlockQueryParams {
-	struct Chunk* calling_chunk;
-	ivec3s block_position;
-	ivec3s world_position;
-};
 
 struct World* world_create();
 
 void world_render(struct World* world);
 
+DWORD WINAPI generation_worker_thread(LPVOID lpParam);
 
 struct Chunk* world_get_chunk_at_chunk_coordinate(struct World* world, ivec3s pos);
 

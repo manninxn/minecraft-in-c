@@ -17,25 +17,29 @@ const ivec3 face_directions[6] = {
 	+0, -1, +0, //BOTTOM
 };
 
+#define INDEX_MAX_COUNT (((CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE) / 2) * 6 * 6)
+
+#define VERTEX_MAX_COUNT (((CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE) / 2) * (6 * 8) + 8)
+
 
 struct Chunk* chunk_new(struct World* world, ivec3s pos) {
 	struct Chunk* chunk = malloc(sizeof(struct Chunk));
 
 	chunk->chunk_pos = pos;											
-	chunk->vbo = vbo_create(GL_ARRAY_BUFFER, true);
-	chunk->ebo = vbo_create(GL_ELEMENT_ARRAY_BUFFER, true);
-	chunk->vao = vao_create();
-	chunk->index_count = ((CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE) / 2) * 6 * 6;
-	chunk->vert_count = ((CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE) / 2) * (6 * 8) + 8;
+
+	chunk->index_count = INDEX_MAX_COUNT;
+	chunk->vert_count = VERTEX_MAX_COUNT;
 	//chunk->blocks = calloc(CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE, sizeof(BlockId));
 	chunk->block_count = 0;
 	chunk->world = world;
 	chunk->updating = false;
 	chunk->empty = true;
+	chunk->loaded = false;
 	num_chunks++;
 
+	chunk->generation_mutex = CreateMutex(NULL, FALSE, NULL);
 
-
+	chunk->vertex_buffer = NULL;
 	return chunk;						   
 }
 
@@ -52,12 +56,16 @@ int vertexAO(int side1,int side2,int corner) {
 }
 
 void chunk_update(struct Chunk* chunk, struct World* world) {
+		WaitForSingleObject(chunk->generation_mutex, INFINITY);
+
+
+		if (chunk->vertex_buffer != NULL) return;
 
 		ivec3s chunk_pos = chunk->chunk_pos;
 
-		unsigned int* vertex_buffer = malloc(chunk->vert_count* sizeof(unsigned int));
+		chunk->vertex_buffer = malloc(VERTEX_MAX_COUNT * sizeof(unsigned int));
 
-		unsigned int* index_buffer = malloc(chunk->index_count * sizeof(int));
+		chunk->index_buffer = malloc(INDEX_MAX_COUNT * sizeof(int));
 
 		int index_pos = 0;
 		int vertex_pos = 0;
@@ -86,11 +94,11 @@ void chunk_update(struct Chunk* chunk, struct World* world) {
 						for (int vert = 0; vert < 4; vert++) {
 							const unsigned int* vertex = &CUBE_VERTICES[CUBE_INDICES[(dir * 6) + UNIQUE_INDICES[vert]] * 3];
 							ivec2s atlas_coords = block_get_atlas_coord(id, dir);
-							vertex_buffer[vertex_pos] = (vertex[0] + x) | ((vertex[1] + y) << 6u) | ((vertex[2] + z) << 12u) | (vert << 18u) | (atlas_coords.x << 20u) | (atlas_coords.y << 24u) | (dir << 28u);
+							chunk->vertex_buffer[vertex_pos] = (vertex[0] + x) | ((vertex[1] + y) << 6u) | ((vertex[2] + z) << 12u) | (vert << 18u) | (atlas_coords.x << 20u) | (atlas_coords.y << 24u) | (dir << 28u);
 							ivec3s corner = get_corner(vertex, face_direction, block_pos);
 							ivec3s side1 = get_side1(vertex, face_direction, block_pos);
 							ivec3s side2 = get_side2(vertex, face_direction, block_pos);
-							vertex_buffer[vertex_pos + 1] = vertexAO(
+							chunk->	vertex_buffer[vertex_pos + 1] = vertexAO(
 								CHUNK_WORLD_BLOCK_EXISTS(chunk, side1),
 								CHUNK_WORLD_BLOCK_EXISTS(chunk, side2),
 								CHUNK_WORLD_BLOCK_EXISTS(chunk, corner));
@@ -100,7 +108,7 @@ void chunk_update(struct Chunk* chunk, struct World* world) {
 						}
 
 						for (int index = 0; index < 6; index++) {
-							index_buffer[index_pos] = index_offset + FACE_INDICES[index];
+							chunk->index_buffer[index_pos] = index_offset + FACE_INDICES[index];
 							index_pos++;
 						}
 						index_offset += 4;
@@ -112,14 +120,11 @@ void chunk_update(struct Chunk* chunk, struct World* world) {
 	}
 	
 	
-		vbo_buffer(chunk->vbo, vertex_buffer, 0, vertex_pos * sizeof(unsigned int));
-		vbo_buffer(chunk->ebo, index_buffer, 0, index_pos * sizeof(int));
-
-		free(vertex_buffer);
-		free(index_buffer);
-		
+		chunk->vert_count = vertex_pos;
+		chunk->index_count = index_pos;
 		chunk->updating = false;
 
+		ReleaseMutex(chunk->generation_mutex);
 
 }
 
@@ -192,22 +197,51 @@ bool chunk_get_block(struct Chunk* chunk, ivec3s position, BlockId* out_block) {
 void flag_chunk_update(struct Chunk* chunk) {
 	if (!chunk->updating) { //if multiple sources flag this chunk, do not add it multiple times
 		chunk->updating = true;
+		WaitForSingleObject(chunk->world->stack_mutex, INFINITY);
 		push_stack(chunk->world->queued_updates, &chunk);
+		ReleaseMutex(chunk->world->stack_mutex);
 	}
 }
 
 void chunk_render(struct Chunk* chunk) {
-	if(chunk->updating) return;
+
+	WaitForSingleObject(chunk->generation_mutex, INFINITY);
+
+
+	if (!chunk->loaded) {
+		chunk->vbo = vbo_create(GL_ARRAY_BUFFER, true);
+		chunk->ebo = vbo_create(GL_ELEMENT_ARRAY_BUFFER, true);
+		chunk->vao = vao_create();
+		chunk->loaded = true;
+	}
+
 	if (chunk->empty) { return; }
+
+	if (chunk->changed) {
+
+		vbo_buffer(chunk->vbo, chunk->vertex_buffer, 0, chunk->vert_count * sizeof(unsigned int));
+		vbo_buffer(chunk->ebo, chunk->index_buffer, 0, chunk->index_count * sizeof(int));
+
+		free(chunk->vertex_buffer);
+		free(chunk->index_buffer);
+
+		chunk->vertex_buffer = NULL;
+
+		chunk->changed = false;
+
+	}
 
 	vao_attribute(chunk->vao, chunk->vbo, 0, 1, GL_UNSIGNED_INT, 2 * sizeof(unsigned int), 0);
 	vao_attribute(chunk->vao, chunk->ebo, 1, 1, GL_UNSIGNED_INT, 2 * sizeof(unsigned int), sizeof(unsigned int));
-	
+
 
 	vao_bind(chunk->vao);
 	vbo_bind(chunk->ebo);
 
 	shader_uniform_ivec3(state.shader, "chunk_pos", chunk->chunk_pos.raw);
 
- 	glDrawElements(GL_TRIANGLES, chunk->index_count, GL_UNSIGNED_INT, 0);
+	glDrawElements(GL_TRIANGLES, chunk->index_count, GL_UNSIGNED_INT, 0);
+
+	ReleaseMutex(chunk->generation_mutex);
+
 }
