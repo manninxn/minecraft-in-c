@@ -147,7 +147,9 @@
     <ClCompile Include="utils.c" />
     <ClCompile Include="vao.c" />
     <ClCompile Include="vbo.c" />
+    <ClCompile Include="wood_plank.c" />
     <ClCompile Include="world.c" />
+    <ClCompile Include="worldgen.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="block.h" />
@@ -167,6 +169,7 @@
     <ClInclude Include="vao.h" />
     <ClInclude Include="vbo.h" />
     <ClInclude Include="world.h" />
+    <ClInclude Include="worldgen.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="fragment.glsl" />

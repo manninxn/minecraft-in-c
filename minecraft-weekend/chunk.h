@@ -3,34 +3,34 @@
 
 
 #include "block.h"
-#include <cglm/types-struct.h>
-#include <cglm/cglm.h>
+#include "ivec3s.h"
 #include <malloc.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
 #include "vbo.h"
 #include "vao.h"
+#include <cglm/box.h>
 #define CHUNK_SIZE 16
+#define BLOCKS_PER_CHUNK (CHUNK_SIZE*CHUNK_SIZE*CHUNK_SIZE)
+
+typedef vec3s AABB[2];
 
 struct World;
 
 struct Chunk {
-	BlockId blocks[CHUNK_SIZE*CHUNK_SIZE*CHUNK_SIZE];
+	BlockId blocks[BLOCKS_PER_CHUNK];
 	ivec3s chunk_pos;
 	bool empty;
+	AABB bounds;
 	struct VAO vao;
 	struct VBO vbo;
 	struct VBO ebo;
 	int vert_count;
 	int index_count;
-	int block_count;
 	struct World* world;
-	unsigned int* vertex_buffer;
-	unsigned int* index_buffer;
 	bool updating;
 	bool loaded;
-	bool changed;
 
 };
 

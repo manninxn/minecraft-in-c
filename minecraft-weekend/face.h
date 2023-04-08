@@ -32,10 +32,10 @@ static const unsigned int CUBE_VERTICES[] = {
 };
 
 
-ivec3s get_corner(ivec3 vertex, ivec3 normal, ivec3s voxel);
+ivec3s get_corner(ivec3 vertex, ivec3s normal, ivec3s voxel);
 
 
-ivec3s get_side1(ivec3 vertex, ivec3 normal, ivec3s voxel);/* {
+ivec3s get_side1(ivec3 vertex, ivec3s normal, ivec3s voxel);/* {
     ivec3s side1 = { vertex.x, vertex.y, vertex.z };
     if (normal.x != 0) {
         side1.y += 1;
@@ -49,7 +49,7 @@ ivec3s get_side1(ivec3 vertex, ivec3 normal, ivec3s voxel);/* {
     return side1;
 }
 */
-ivec3s get_side2(ivec3 vertex, ivec3 normal, ivec3s voxel);/*{
+ivec3s get_side2(ivec3 vertex, ivec3s normal, ivec3s voxel);/*{
     ivec3s side2 = { vertex.x, vertex.y, vertex.z };
     if (normal.x != 0) {
         side2.z += 1;

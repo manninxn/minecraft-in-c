@@ -182,7 +182,7 @@ int main() {
 
 		shader_uniform_vec3(state.shader, "look_dir", state.cam.look_direction.raw);
 		shader_uniform_ivec2(state.shader, "viewport_size", state.cam.viewport_size.raw);
-		struct ViewProjection view_proj = camera_gew_view_projection(state.cam);
+		struct ViewProjection view_proj = camera_get_view_projection(state.cam);
 
 		shader_uniform_view_proj(shader, view_proj);
 		shader_uniform_texture(shader, "texture1", texture, 0);

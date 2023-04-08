@@ -13,7 +13,8 @@ typedef enum {
 	GRASS,
 	DIRT,
 	STONE,
-	IRON_ORE
+	IRON_ORE,
+	WOOD_PLANK
 } BlockId;
 
 
@@ -43,6 +44,11 @@ ivec2s block_get_atlas_coord(BlockId block, Direction direction);
 
 
 //https://github.com/jdah/minecraft-weekend/blob/master/src/block/block.h
+//basically, it calls a function by the name passed appended to _init
+// that ## thing appends them at compile time
+// like it is essentially _name + _init();
+// to the compiler
+
 
 #define _BLOCK_DECL(_name)\
     extern void _name##_init();\
@@ -56,6 +62,7 @@ static inline void block_init() {
 	_BLOCK_DECL(dirt);
 	_BLOCK_DECL(stone);
 	_BLOCK_DECL(iron_ore);
+	_BLOCK_DECL(wood_plank);
 }
 
 

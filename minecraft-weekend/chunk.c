@@ -8,13 +8,13 @@
 
 int num_chunks = 0;
 
-const ivec3 face_directions[6] = {
-	+0, +0, +1, //NORTH
-	+0, +0, -1, //SOUTH
-	+1, +0, +0, //EAST
-	-1, +0, +0, //WEST
-	+0, +1, +0, //TOP
-	+0, -1, +0, //BOTTOM
+ivec3s face_directions[6] = {
+	{.x = +0, .y = +0, .z = +1}, //NORTH
+	{.x = +0, .y = +0, .z = -1}, //SOUTH
+	{.x = +1, .y = +0, .z = +0}, //EAST
+	{.x = -1, .y = +0, .z = +0}, //WEST
+	{.x = +0, .y = +1, .z = +0}, //TOP
+	{.x = +0, .y = -1, .z = +0}, //BOTTOM
 };
 
 
@@ -27,20 +27,34 @@ struct Chunk* chunk_new(struct World* world, ivec3s pos) {
 	chunk->vao = vao_create();
 	chunk->index_count = ((CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE) / 2) * 6 * 6;
 	chunk->vert_count = ((CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE) / 2) * (6 * 8) + 8;
-	//chunk->blocks = calloc(CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE, sizeof(BlockId));
-	chunk->block_count = 0;
+
 	chunk->world = world;
 	chunk->updating = false;
 	chunk->empty = true;
 	num_chunks++;
 
+	AABB bounds;
+	
+	ivec3s min = glms_ivec3_scale(chunk->chunk_pos, CHUNK_SIZE);
+	ivec3s max = glms_ivec3_add(min, (ivec3s) {
+		CHUNK_SIZE,
+			CHUNK_SIZE,
+			CHUNK_SIZE,
+	});
 
+	chunk->bounds[0] = (vec3s) {
+		.x = (float) min.x,
+		.y = (float) min.y,
+		.z = (float) min.z
+	};
+	chunk->bounds[1] = (vec3s){
+		.x = (float)max.x,
+		.y = (float)max.y,
+		.z = (float)max.z
+	};
 
 	return chunk;						   
 }
-
-size_t vertex_buffer_size = 0;
-size_t index_buffer_size = 0;
 
 #define STRIDE 8
 
@@ -72,11 +86,9 @@ void chunk_update(struct Chunk* chunk, struct World* world) {
 
 				for (Direction dir = 0; dir < NUM_DIRECTIONS; dir++) {
 
-					int* face_direction = &face_directions[dir];
+					ivec3s face_direction = face_directions[dir];
 
-
-					ivec3s adjacent_block_pos;
-					glm_ivec3_add(block_pos.raw, face_direction, &adjacent_block_pos.raw);
+					ivec3s adjacent_block_pos = glms_ivec3_add(block_pos, face_direction);
 
 					int adjacent_block_exists = CHUNK_WORLD_BLOCK_EXISTS(chunk, adjacent_block_pos);
 
@@ -87,6 +99,7 @@ void chunk_update(struct Chunk* chunk, struct World* world) {
 							const unsigned int* vertex = &CUBE_VERTICES[CUBE_INDICES[(dir * 6) + UNIQUE_INDICES[vert]] * 3];
 							ivec2s atlas_coords = block_get_atlas_coord(id, dir);
 							vertex_buffer[vertex_pos] = (vertex[0] + x) | ((vertex[1] + y) << 6u) | ((vertex[2] + z) << 12u) | (vert << 18u) | (atlas_coords.x << 20u) | (atlas_coords.y << 24u) | (dir << 28u);
+
 							ivec3s corner = get_corner(vertex, face_direction, block_pos);
 							ivec3s side1 = get_side1(vertex, face_direction, block_pos);
 							ivec3s side2 = get_side2(vertex, face_direction, block_pos);
@@ -129,9 +142,6 @@ void chunk_destroy(struct Chunk* chunk) {
 	vao_destroy(chunk->vao);
 }
 
-void print_sizes() {
-	printf("size of vertex in memory: %d\nsize of index in memory: %d\n", vertex_buffer_size, index_buffer_size);
-}
 
 
 void chunk_set_block(struct Chunk* chunk, ivec3s position, BlockId block) {
@@ -174,9 +184,9 @@ void chunk_set_block(struct Chunk* chunk, ivec3s position, BlockId block) {
 }
 
 bool chunk_get_block(struct Chunk* chunk, ivec3s position, BlockId* out_block) {
-	if (position.x < 0 | position.x >= CHUNK_SIZE) return false;
-	if (position.y < 0 | position.y >= CHUNK_SIZE) return false;
-	if (position.z < 0 | position.z >= CHUNK_SIZE) return false;
+	if (position.x < 0 | position.x >= CHUNK_SIZE
+	  | position.y < 0 | position.y >= CHUNK_SIZE
+	  | position.z < 0 | position.z >= CHUNK_SIZE) return false;
 
 	if ((chunk->blocks)[chunk_pos_to_index(position)] == 0) return false;
 

@@ -24,6 +24,9 @@
     <Filter Include="src\util">
       <UniqueIdentifier>{fa4843d5-77fb-43d0-a673-dcaac21e46b0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\world\gen">
+      <UniqueIdentifier>{04bf7556-8f63-4f95-b44e-11b630f132ea}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.c">
@@ -83,6 +86,12 @@
     <ClCompile Include="utils.c">
       <Filter>src\util</Filter>
     </ClCompile>
+    <ClCompile Include="wood_plank.c">
+      <Filter>src\world\blocks</Filter>
+    </ClCompile>
+    <ClCompile Include="worldgen.c">
+      <Filter>src\world\gen</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="shader.h">
@@ -135,6 +144,9 @@
     </ClInclude>
     <ClInclude Include="ivec3.h">
       <Filter>src\util</Filter>
+    </ClInclude>
+    <ClInclude Include="worldgen.h">
+      <Filter>src\world\gen</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

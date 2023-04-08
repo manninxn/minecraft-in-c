@@ -1,11 +1,13 @@
 #include "world.h"
 #define FNL_IMPL
 #include "FastNoiseLite.h"
+#include "state.h"
 #include <windows.h>
 #include <time.h>
 #include <io.h>
 
-fnl_state noise, stone_noise, iron_noise, cave_noise, floating_island_noise;
+
+fnl_state noise, stone_noise, iron_noise, cave_noise, floating_island_noise, other_noise_lol, mountain_threshold;
 
 
 
@@ -20,9 +22,16 @@ world->world_loaded_position = (ivec3s) {0, 0, 0},
 	world->queued_updates = create_stack(sizeof(struct Chunk*), MAX_CHUNKS);
 
 
-	 noise = fnlCreateState();
-	noise.noise_type = FNL_NOISE_PERLIN;
+	mountain_threshold = fnlCreateState();
+	mountain_threshold.noise_type = FNL_NOISE_PERLIN;
+	mountain_threshold.frequency = 0.05;
 
+	other_noise_lol = fnlCreateState();
+	other_noise_lol.noise_type = FNL_NOISE_PERLIN;
+	
+
+	noise = fnlCreateState();
+	noise.noise_type = FNL_NOISE_PERLIN;
 
 	 stone_noise = fnlCreateState();
 	stone_noise.noise_type = FNL_NOISE_PERLIN;
@@ -32,8 +41,9 @@ world->world_loaded_position = (ivec3s) {0, 0, 0},
 	iron_noise.frequency = 0.25;
 
 	 cave_noise = fnlCreateState();
-	cave_noise.noise_type = FNL_NOISE_PERLIN;
-	cave_noise.frequency = 0.05;
+	cave_noise.noise_type = FNL_NOISE_VALUE_CUBIC;
+	cave_noise.frequency = 0.1;
+	
 
 	floating_island_noise = fnlCreateState();
 	floating_island_noise.noise_type = FNL_NOISE_PERLIN;
@@ -43,15 +53,19 @@ world->world_loaded_position = (ivec3s) {0, 0, 0},
 }
 
 void world_update(struct World* world) {
+
+
+
 	clock_t start, end;
 	double cpu_time_used, load_unloaded_chunks_time;
 	start = clock();
-	world_load_unloaded_chunks(world, 2);
+	world_load_unloaded_chunks(world, 1);
 	end = clock();
 	load_unloaded_chunks_time = ((double)(end - start)) / CLOCKS_PER_SEC;
 
 	start = clock();
 	int updates = 0;
+
 	while (world->queued_updates->size > 0) {
 		struct Chunk* chunk;
 		pop_stack(world->queued_updates, &chunk);
@@ -62,6 +76,7 @@ void world_update(struct World* world) {
 			
 		}
 	}
+
 	end = clock();
 	cpu_time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
 	if (updates > 0) printf("world took %f seconds to load unloaded chunks, %f seconds to update %d chunks (%fs/update)\n", load_unloaded_chunks_time,  cpu_time_used, updates, cpu_time_used / (float)updates);
@@ -72,18 +87,17 @@ void world_update(struct World* world) {
 
 void world_render(struct World* world) {
 	
+	Frustum frustum;
+	camera_get_frustum(&state.cam, &frustum);
 
-	for (int x = 0; x < RENDER_DISTANCE; x++)
-		for (int y = 0; y < RENDER_DISTANCE; y++)
-			for (int z = 0; z < RENDER_DISTANCE; z++)
-			{
-				struct Chunk* chunk = world->chunks[chunk_coord_to_index(x, y, z)];
-				if (chunk != NULL) {
-					chunk_render(world->chunks[chunk_coord_to_index(x, y, z)]);
-				}
-				
-			}
 
+	for (int i = 0; i < MAX_CHUNKS; i++) {
+		struct Chunk* chunk = world->chunks[i];
+		if (chunk != NULL && glms_aabb_frustum(chunk->bounds, frustum)) {
+				chunk_render(chunk);
+		}	
+	}
+	
 
 
 }
@@ -134,133 +148,157 @@ static int _ftb_cmp(const ivec3s* center, const ivec3s* a, ivec3s* b) {
 	return -(glms_ivec3_norm2(glms_ivec3_sub(*center, *b)) - glms_ivec3_norm2(glms_ivec3_sub(*center, *a)));
 }
 
-void world_load_unloaded_chunks(struct World* world, int count) {
+void world_load_unloaded_chunks(struct World* world, int count) { // under construction lol, count does nothing because to render more than 1 you have to sort every chunk position and qsort is expensive
+
+
+	ivec3s center = glms_ivec3_add(world->world_loaded_position, (ivec3s) { RENDER_DISTANCE / 2, RENDER_DISTANCE / 2, RENDER_DISTANCE / 2 });
 	int num_loaded = 0;
 	int spread = 1;
-	ivec3s vectors_sorted[MAX_CHUNKS];
+	//ivec3s vectors_sorted[MAX_CHUNKS];
+	ivec3s nearest = (ivec3s){ 0 };
 	int num_unloaded = 0;
-	for (int chunk_index = RENDER_DISTANCE * RENDER_DISTANCE; chunk_index < MAX_CHUNKS; chunk_index++) {
+	for (int chunk_index = 0; chunk_index < MAX_CHUNKS; chunk_index++) {
 			struct Chunk* chunk = world->chunks[chunk_index];
 			ivec3s pos = world_chunk_offset(world, chunk_index);
 			if (chunk != NULL) {
 				continue;
 			}
+			if (0 > (glms_ivec3_norm2(glms_ivec3_sub(center, pos)) - glms_ivec3_norm2(glms_ivec3_sub(center, nearest)))) {
+				nearest = pos;
+			}
+			//vectors_sorted[num_unloaded] = pos;
+			//num_unloaded++;
 			
-			vectors_sorted[num_unloaded] = pos;
-			num_unloaded++;
 	}
 	int amt = min(num_unloaded, count);
-	if (amt == 0) return;
-	ivec3s world_center = glms_ivec3_add(world->world_loaded_position, (ivec3s) {RENDER_DISTANCE / 2, RENDER_DISTANCE / 2, RENDER_DISTANCE / 2});
+	//if (amt == 0) return;
+	
 
-	qsort_s(vectors_sorted, num_unloaded, sizeof(ivec3s), (int (*)(const void*, const void*, void*)) _ftb_cmp, &world_center);
+	//qsort_s(vectors_sorted, num_unloaded, sizeof(ivec3s), (int (*)(const void*, const void*, void*)) _ftb_cmp, &world_center);
 
-	for(int vec = 0; vec < amt; vec++) {
-					ivec3s chunk_pos = vectors_sorted[vec];
-					int chunk_index = world_chunk_index(world, chunk_pos);
+	for (int vec = 0; vec < amt; vec++) {}
+	//ivec3s chunk_pos = vectors_sorted[vec];
+	ivec3s chunk_pos = nearest;
+	int chunk_index = world_chunk_index(world, chunk_pos);
 
-					struct Chunk* chunk = world->chunks[chunk_index];
+	struct Chunk* chunk = world->chunks[chunk_index];
 
-					if (chunk != NULL) continue;
+	//if (chunk != NULL) continue;
 				
-					chunk = chunk_new(world, chunk_pos);
+	chunk = chunk_new(world, chunk_pos);
 					
 
-					world->chunks[chunk_index] = chunk;
-					int num_blocks = 0;
-					int x, y, z;
-					x = chunk_pos.x;
-					y = chunk_pos.y;
-					z = chunk_pos.z;
+	world->chunks[chunk_index] = chunk;
+	int num_blocks = 0;
+	int x, y, z;
+	x = chunk_pos.x;
+	y = chunk_pos.y;
+	z = chunk_pos.z;
 
 
-					for (int xb = 0; xb < CHUNK_SIZE; xb++)
-						for (int zb = 0; zb < CHUNK_SIZE; zb++) {
-							BlockId block = AIR;
-							const int N_OCTAVES = 5;
-							float amplitude = 15.0;
-							float frequency = 0.5;
-							float out1 = 0; // or double value = 0; depending
-							for (int i = 0; i < N_OCTAVES; i++) {
-								out1 += fnlGetNoise2D(&noise, frequency * (float)(x * CHUNK_SIZE + xb), frequency * (float)(z * CHUNK_SIZE + zb)) * amplitude;
-								amplitude *= 0.5;
-								frequency *= 2.0;
+	for (int xb = 0; xb < CHUNK_SIZE; xb++)
+		for (int zb = 0; zb < CHUNK_SIZE; zb++) {
+			BlockId block = AIR;
+
+			const int N_OCTAVES = 5;
+			float out1, out2;
+			float mountain = remap_range(fnlGetNoise2D(&mountain_threshold, x * CHUNK_SIZE + xb, z * CHUNK_SIZE + zb), -1.0, 1.0, 0.0, 1.0);
+			mountain *= mountain;
+				float amplitude = 15.0;
+				float frequency = 0.5;
+				out1 = 0; // or double value = 0; depending
+				for (int i = 0; i < N_OCTAVES; i++) {
+					out1 += fnlGetNoise2D(&noise, frequency * (float)(x * CHUNK_SIZE + xb), frequency * (float)(z * CHUNK_SIZE + zb)) * amplitude;
+					amplitude *= 0.5;
+					frequency *= 2.0;
+				}
+				amplitude = 300.0;
+				frequency = 0.75;
+				out2 = 0; // or double value = 0; depending
+				for (int i = 0; i < N_OCTAVES; i++) {
+					out2 += fnlGetNoise2D(&noise, frequency * (float)(x * CHUNK_SIZE + xb), frequency * (float)(z * CHUNK_SIZE + zb)) * amplitude;
+					amplitude *= 0.5;
+					frequency *= 2.0;
+				}
+							
+				float out = lerp(out1, max(out2, -0.05), mountain);
+
+			int terrain_height = floor(out) + 64;
+
+
+			float stone_height = fnlGetNoise2D(&stone_noise, xb + CHUNK_SIZE * x, zb + CHUNK_SIZE * z) - (4.0 * mountain);
+			stone_height = round(remap_range(stone_height, -1.0, 1.0, 2.0, 5.0));
+
+			for (int i = 0; i < CHUNK_SIZE; i++) {
+				int world_y = i + CHUNK_SIZE * y;
+				if (world_y == terrain_height && terrain_height < 86) {
+					block = GRASS;
+					num_blocks++;
+				}
+				else if (world_y < terrain_height) {
+					if (world_y < terrain_height - stone_height) {
+						block = STONE;
+						num_blocks++;
+
+						if (world_y < 55) {
+							float iron_ore_noise = fnlGetNoise3D(&iron_noise, xb + CHUNK_SIZE * x, i + CHUNK_SIZE * y, zb + CHUNK_SIZE * z) + 1.0;
+							iron_ore_noise *= iron_ore_noise * iron_ore_noise;
+							int distance_from_best_level = abs(world_y - 40);
+							if (iron_ore_noise > remap_range((float)distance_from_best_level, 0.0, 9.0, 3.15, 4.0)) {
+								block = IRON_ORE;
 							}
-
-							int terrain_height = floor(out1) + 64;
-
-
-							float stone_height = fnlGetNoise2D(&stone_noise, xb + CHUNK_SIZE * x, zb + CHUNK_SIZE * z);
-							stone_height = round(remap_range(stone_height, -1.0, 1.0, 2.0, 5.0));
-
-							for (int i = 0; i < CHUNK_SIZE; i++) {
-								int world_y = i + CHUNK_SIZE * y;
-								if (world_y == terrain_height) {
-									block = GRASS;
-									num_blocks++;
-								}
-								else if (world_y < terrain_height) {
-									if (world_y < terrain_height - stone_height) {
-										block = STONE;
-										num_blocks++;
-
-										if (world_y < 55) {
-											float iron_ore_noise = fnlGetNoise3D(&iron_noise, xb + CHUNK_SIZE * x, i + CHUNK_SIZE * y, zb + CHUNK_SIZE * z) + 1.0;
-											iron_ore_noise *= iron_ore_noise * iron_ore_noise;
-											int distance_from_best_level = abs(world_y - 40);
-											if (iron_ore_noise > remap_range((float)distance_from_best_level, 0.0, 9.0, 3.15, 4.0)) {
-												block = IRON_ORE;
-											}
-										}
-
-										if (world_y < 60) {
-											float cave = fnlGetNoise3D(&cave_noise, xb + CHUNK_SIZE * x, i + CHUNK_SIZE * y, zb + CHUNK_SIZE * z);
-											if (cave > 0.5) {
-												block = AIR;
-												num_blocks--;
-											}
-										}
-
-
-									}
-									else {
-										block = DIRT;
-										num_blocks++;
-									}
-
-
-
-
-								}
-								else {
-									if (world_y > 80) {
-										int _y = (i + CHUNK_SIZE * y) * 3;
-										int _y2 = (1 + i + CHUNK_SIZE * y) * 3;
-										float island = fnlGetNoise3D(&floating_island_noise, xb + CHUNK_SIZE * x, _y, zb + CHUNK_SIZE * z);
-										float block_above = fnlGetNoise3D(&floating_island_noise, xb + CHUNK_SIZE * x, _y2, zb + CHUNK_SIZE * z);
-										if (island > 0.5) {
-											block = block_above > 0.5 ? DIRT : GRASS;
-											num_blocks++;
-										}
-										else {
-											block = AIR;
-											num_blocks--;
-										}
-									}
-									else {
-										block = AIR;
-										num_blocks--;
-									}
-								}
-
-								chunk_set_block(chunk, (ivec3s) { xb, i, zb }, block);
-
-		
-							}
-
 						}
 
+
+
+
 					}
+					else {
+						block = DIRT;
+						num_blocks++;
+					}
+
+
+
+
+				}
+				else {
+					if (world_y > 200) {
+						int _y = (i + CHUNK_SIZE * y) * 3;
+						int _y2 = (1 + i + CHUNK_SIZE * y) * 3;
+						float island = fnlGetNoise3D(&floating_island_noise, xb + CHUNK_SIZE * x, _y, zb + CHUNK_SIZE * z);
+						float block_above = fnlGetNoise3D(&floating_island_noise, xb + CHUNK_SIZE * x, _y2, zb + CHUNK_SIZE * z);
+						if (island > 0.5) {
+							block = block_above > 0.5 ? DIRT : GRASS;
+							num_blocks++;
+						}
+						else {
+							block = AIR;
+							num_blocks--;
+						}
+					}
+					else {
+						block = AIR;
+						num_blocks--;
+					}
+				}
+
+				if (world_y < 70) {
+					float cave = fnlGetNoise3D(&cave_noise, xb + CHUNK_SIZE * x, i + CHUNK_SIZE * y, zb + CHUNK_SIZE * z);
+					if (cave > 0.5) {
+						block = AIR;
+						num_blocks--;
+					}
+				}
+
+				chunk_set_block(chunk, (ivec3s) { xb, i, zb }, block);
+
+		
+			}
+
+		}
+
+	//}
 
 
 

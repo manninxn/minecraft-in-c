@@ -4,7 +4,7 @@
 #include <GLFW/glfw3.h>
 
 #include "utils.h"
-#include <cglm/types-struct.h>
+#include "ivec3s.h"
 
 struct ViewProjection {
 	mat4s view;

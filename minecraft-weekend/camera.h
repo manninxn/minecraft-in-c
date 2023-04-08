@@ -3,8 +3,8 @@
 
 #include <cglm/cglm.h>
 #include "gfx_common.h"
-#include <cglm/types-struct.h>
 
+typedef vec4 Frustum[6];
 
 struct Camera {
 	vec3s position;
@@ -19,13 +19,15 @@ struct Camera {
 
 struct Camera camera_new(vec3s position, vec3s direction, float fov, float near_clip, float far_clip);
 
-struct ViewProjection camera_gew_view_projection(struct Camera cam);
+struct ViewProjection camera_get_view_projection(struct Camera cam);
+
+mat4s camera_viewproj_mat4(struct Camera cam);
 
 void camera_handle_mouse_movement(struct Camera* cam, float delta_x, float delta_y);
 
 void camera_handle_input(struct Camera* cam);
 
-
+void camera_get_frustum(struct Camera* cam, Frustum* out);
 
 
 #endif

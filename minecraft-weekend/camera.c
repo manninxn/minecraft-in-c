@@ -24,7 +24,7 @@ struct Camera camera_new(vec3s position, vec3s direction, float fov, float near_
 
 }
 
-struct ViewProjection camera_gew_view_projection(struct Camera cam) {
+struct ViewProjection camera_get_view_projection(struct Camera cam) {
 	mat4s projection;
 	glm_perspective(cam.fov, (float)cam.viewport_size.x / (float)cam.viewport_size.y, cam.near_clip, cam.far_clip, &projection.raw);
 	mat4s view;
@@ -36,6 +36,17 @@ struct ViewProjection camera_gew_view_projection(struct Camera cam) {
 	};
 
 	return vp;
+}
+
+
+mat4s camera_viewproj_mat4(struct Camera cam) {
+	mat4s projection;
+	glm_perspective(cam.fov, (float)cam.viewport_size.x / (float)cam.viewport_size.y, cam.near_clip, cam.far_clip, &projection.raw);
+	mat4s view;
+	glm_look(cam.position.raw, cam.look_direction.raw, view_up, &view.raw);
+	mat4s view_proj;
+	glm_mat4_mul(projection.raw, view.raw, &view_proj.raw);
+	return view_proj;
 }
 
 void camera_handle_input(struct Camera* cam) {
@@ -104,6 +115,44 @@ void camera_handle_input(struct Camera* cam) {
 		}
 	}
 
+	if (glfwGetMouseButton(state.window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
+
+		ivec3s hit_pos;
+		ivec3s last;
+		bool init = false;
+		struct Chunk* containing_chunk;
+		for (int i = 1; i < 5; i++) {
+			vec3s pos;
+			vec3s cam_pos = state.cam.position;
+
+			vec3 ray;
+			glm_vec3_scale(state.cam.look_direction.raw, i, &ray);
+			glm_vec3_add(cam_pos.raw, ray, &pos);
+
+
+			hit_pos.x = (int)pos.x;
+			hit_pos.y = (int)pos.y;
+			hit_pos.z = (int)pos.z;
+
+
+
+			int hit = get_block_at_world_pos(state.world, hit_pos, NULL, &containing_chunk);
+
+			if (hit == 1 && init) {
+
+				ivec3s block_pos = world_pos_to_block_pos(last);
+
+				chunk_set_block(containing_chunk, block_pos, WOOD_PLANK);
+				break;
+			}
+			else {
+				init = true;
+				last = hit_pos;
+			}
+
+		}
+	}
+
 }
 
 void camera_handle_mouse_movement(struct Camera* cam, float xpos, float ypos) {
@@ -133,4 +182,8 @@ void camera_handle_mouse_movement(struct Camera* cam, float xpos, float ypos) {
 	glm_vec3_normalize_to(front, &cam->look_direction.raw);
 	
 	glm_vec3_normalize(&cam->look_direction.raw);
+}
+void camera_get_frustum(struct Camera* cam, Frustum* out) {
+	mat4s viewProj = camera_viewproj_mat4(*cam);
+	glm_frustum_planes(viewProj.raw, out);
 }

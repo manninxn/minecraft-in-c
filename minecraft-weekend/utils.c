@@ -25,11 +25,11 @@ char* load_file(const char* fileName)
 }
 
 
-ivec3s get_ortho_one(ivec3 normal) {
-	if (normal[0] != 0) {
+ivec3s get_ortho_one(ivec3s normal) {
+	if (normal.x != 0) {
 		return (ivec3s) { .x = 0, .y = 1, .z = 0};
 	}
-	else if(normal[1] != 0) {
+	else if(normal.y != 0) {
 		return (ivec3s) { .x = 0, .y = 0, .z = 1 };
 	}
 	else {
@@ -37,11 +37,11 @@ ivec3s get_ortho_one(ivec3 normal) {
 	}
 }
 
-ivec3s get_ortho_two(ivec3 normal) {
-	if (normal[0] != 0) {
+ivec3s get_ortho_two(ivec3s normal) {
+	if (normal.x != 0) {
 		return (ivec3s) { .x = 0, .y = 0, .z = 1 };
 	}
-	else if (normal[1] != 0) {
+	else if (normal.y != 0) {
 		return (ivec3s) {
 		.x = 1, .y = 0, .z = 0
 	};
